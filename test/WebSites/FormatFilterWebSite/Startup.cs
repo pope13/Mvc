@@ -5,8 +5,9 @@ using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Mvc;
 using Microsoft.AspNet.Routing;
 using Microsoft.Framework.DependencyInjection;
+using Microsoft.Net.Http.Headers;
 
-namespace ConnegWebSite
+namespace FormatFilterWebSite
 {
     public class Startup
     {
@@ -14,24 +15,29 @@ namespace ConnegWebSite
         {
             var configuration = app.GetTestConfiguration();
 
-            // Set up application services
             app.UseServices(services =>
             {
-                // Add MVC services to the services container
                 services.AddMvc(configuration);
-
                 services.Configure<MvcOptions>(options =>
                 {
-                    options.AddXmlDataContractSerializerFormatter();
+                    var formatFilter = new FormatFilterAttribute();
+                    options.Filters.Add(formatFilter);
+
+                    var customFormatter = new CustomFormatter("application/custom");
+                    options.OutputFormatters.Add(customFormatter);
+
+                    options.FormatterMappings.SetFormatMapping(
+                        "custom", 
+                        MediaTypeHeaderValue.Parse("application/custom"));
                 });
             });
-                        
-            // Add MVC to the request pipeline
+            
             app.UseMvc(routes =>
             {
-                routes.MapRoute("ActionAsMethod", "{controller}/{action}",
-                    defaults: new { controller = "Home", action = "Index" });                
-            });
+                routes.MapRoute("formatroute",
+                                "{controller}/{action}/{id}.{format?}",
+                                new { controller = "Home", action = "Index" });
+            });            
         }
     }
 }
