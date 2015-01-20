@@ -5,6 +5,8 @@ using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Mvc;
 using Microsoft.AspNet.Routing;
 using Microsoft.Framework.DependencyInjection;
+using Microsoft.Net.Http.Headers;
+using UrlHelperWebSite.Controllers;
 
 namespace UrlHelperWebSite
 {
@@ -26,6 +28,45 @@ namespace UrlHelperWebSite
 
                 // Add MVC services to the services container
                 services.AddMvc(configuration);
+
+                services.Configure<MvcOptions>(options =>
+                {
+                    options.InputFormatters.Clear();
+                    options.OutputFormatters.Clear();
+
+                    var xmlSerializerInputFormatter = new XmlSerializerInputFormatter();
+                    xmlSerializerInputFormatter.WrapperProviders.Add(new PersonWrapperProvider());
+                    xmlSerializerInputFormatter.SupportedMediaTypes.Clear();
+                    xmlSerializerInputFormatter.SupportedMediaTypes.Add(
+                        new MediaTypeHeaderValue("application/xml-xmlser"));
+                    xmlSerializerInputFormatter.SupportedMediaTypes.Add(
+                        new MediaTypeHeaderValue("text/xml-xmlser"));
+
+                    var xmlSerializerOutputFormatter = new XmlSerializerOutputFormatter();
+                    xmlSerializerOutputFormatter.WrapperProviders.Add(new PersonWrapperProvider());
+                    xmlSerializerOutputFormatter.SupportedMediaTypes.Clear();
+                    xmlSerializerOutputFormatter.SupportedMediaTypes.Add(
+                        new MediaTypeHeaderValue("application/xml-xmlser"));
+                    xmlSerializerOutputFormatter.SupportedMediaTypes.Add(
+                        new MediaTypeHeaderValue("text/xml-xmlser"));
+
+                    var dcsInputFormatter = new XmlDataContractSerializerInputFormatter();
+                    dcsInputFormatter.WrapperProviders.Add(new PersonWrapperProvider());
+                    dcsInputFormatter.SupportedMediaTypes.Clear();
+                    dcsInputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/xml-dcs"));
+                    dcsInputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/xml-dcs"));
+
+                    var dcsOutputFormatter = new XmlDataContractSerializerOutputFormatter();
+                    dcsOutputFormatter.WrapperProviders.Add(new PersonWrapperProvider());
+                    dcsOutputFormatter.SupportedMediaTypes.Clear();
+                    dcsOutputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("application/xml-dcs"));
+                    dcsOutputFormatter.SupportedMediaTypes.Add(new MediaTypeHeaderValue("text/xml-dcs"));
+
+                    options.InputFormatters.Add(dcsInputFormatter);
+                    options.InputFormatters.Add(xmlSerializerInputFormatter);
+                    options.OutputFormatters.Add(dcsOutputFormatter);
+                    options.OutputFormatters.Add(xmlSerializerOutputFormatter);
+                });
 
                 services.AddScoped<IUrlHelper, CustomUrlHelper>();
             });
