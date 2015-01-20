@@ -35,6 +35,8 @@ namespace Microsoft.AspNet.Mvc.Xml
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("text/xml"));
         }
 
+        public IList<IWrapperProvider> WrapperProviders { get; set; } = new List<IWrapperProvider>();
+
         /// <inheritdoc />
         public IList<MediaTypeHeaderValue> SupportedMediaTypes { get; private set; }
 
@@ -106,7 +108,7 @@ namespace Microsoft.AspNet.Mvc.Xml
         /// <returns>The <see cref="XmlSerializer"/> used during deserialization.</returns>
         protected virtual XmlSerializer CreateXmlSerializer(Type type)
         {
-            return new XmlSerializer(SerializableErrorWrapper.CreateSerializableType(type));
+            return new XmlSerializer(type);
         }
 
         private object GetDefaultValueForType(Type modelType)
@@ -126,9 +128,22 @@ namespace Microsoft.AspNet.Mvc.Xml
 
             using (var xmlReader = CreateXmlReader(new DelegatingStream(request.Body)))
             {
-                var xmlSerializer = CreateXmlSerializer(type);
-                var deserializedObject = xmlSerializer.Deserialize(xmlReader);
-                deserializedObject = SerializableErrorWrapper.UnwrapSerializableErrorObject(type, deserializedObject);
+                var wrapperInfo = FormattingUtilities.GetWrapperInformation(
+                    WrapperProviders,
+                    originalType: type,
+                    serialization: false);
+
+                type = wrapperInfo.WrappingType ?? wrapperInfo.OriginalType;
+
+                var serializer = CreateXmlSerializer(type);
+
+                var deserializedObject = serializer.Deserialize(xmlReader);
+
+                if (wrapperInfo.WrapperProvider != null)
+                {
+                    deserializedObject = wrapperInfo.WrapperProvider.Unwrap(type, deserializedObject);
+                }
+
                 return Task.FromResult(deserializedObject);
             }
         }
