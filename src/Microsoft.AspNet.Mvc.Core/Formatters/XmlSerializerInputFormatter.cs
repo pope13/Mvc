@@ -35,6 +35,8 @@ namespace Microsoft.AspNet.Mvc
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("text/xml"));
         }
 
+        public IList<IWrapperProvider> WrapperProviders { get; set; } = new List<IWrapperProvider>();
+
         /// <inheritdoc />
         public IList<MediaTypeHeaderValue> SupportedMediaTypes { get; private set; }
 
@@ -109,6 +111,28 @@ namespace Microsoft.AspNet.Mvc
             return new XmlSerializer(type);
         }
 
+        protected virtual WrapperContext GetWrapperType(Type originalType)
+        {
+            foreach (var wrapperProvider in WrapperProviders)
+            {
+                Type wrappingType = null;
+                if (wrapperProvider.TryGetWrappingType(originalType, out wrappingType))
+                {
+                    return new WrapperContext()
+                    {
+                        OriginalType = originalType,
+                        WrappingType = wrappingType,
+                        WrapperProvider = wrapperProvider
+                    };
+                }
+            }
+
+            return new WrapperContext()
+            {
+                OriginalType = originalType
+            };
+        }
+
         private object GetDefaultValueForType(Type modelType)
         {
             if (modelType.GetTypeInfo().IsValueType)
@@ -126,8 +150,17 @@ namespace Microsoft.AspNet.Mvc
 
             using (var xmlReader = CreateXmlReader(new DelegatingStream(request.Body)))
             {
-                var xmlSerializer = CreateXmlSerializer(type);
-                return Task.FromResult(xmlSerializer.Deserialize(xmlReader));
+                var wrapperContext = GetWrapperType(type);
+                type = wrapperContext.WrappingType ?? wrapperContext.OriginalType;
+
+                var serializer = CreateXmlSerializer(type);
+                var deserializedObject = serializer.Deserialize(xmlReader);
+                if (wrapperContext.WrapperProvider != null)
+                {
+                    deserializedObject = wrapperContext.WrapperProvider.Unwrap(deserializedObject);
+                }
+
+                return Task.FromResult(deserializedObject);
             }
         }
     }

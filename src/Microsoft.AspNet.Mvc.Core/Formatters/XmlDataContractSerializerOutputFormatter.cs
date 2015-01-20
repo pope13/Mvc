@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
@@ -40,6 +41,8 @@ namespace Microsoft.AspNet.Mvc
             WriterSettings = writerSettings;
         }
 
+        public IList<IWrapperProvider> WrapperProviders { get; set; } = new List<IWrapperProvider>();
+
         /// <summary>
         /// Gets the settings to be used by the XmlWriter.
         /// </summary>
@@ -65,10 +68,36 @@ namespace Microsoft.AspNet.Mvc
             return declaredType;
         }
 
+        protected virtual WrapperContext GetWrapperType(Type originalType)
+        {
+            foreach (var wrapperProvider in WrapperProviders)
+            {
+                Type wrappingType = null;
+                if (wrapperProvider.TryGetWrappingType(originalType, out wrappingType))
+                {
+                    return new WrapperContext()
+                    {
+                        OriginalType = originalType,
+                        WrappingType = wrappingType,
+                        WrapperProvider = wrapperProvider
+                    };
+                }
+            }
+
+            return new WrapperContext()
+            {
+                OriginalType = originalType
+            };
+        }
+
         /// <inheritdoc />
         protected override bool CanWriteType(Type declaredType, Type runtimeType)
         {
-            return CreateSerializer(GetSerializableType(declaredType, runtimeType)) != null;
+            var type = GetSerializableType(declaredType, runtimeType);
+            var wrapperContext = GetWrapperType(type);
+            type = wrapperContext.WrappingType ?? wrapperContext.OriginalType;
+
+            return CreateSerializer(type) != null;
         }
 
         /// <summary>
@@ -117,11 +146,20 @@ namespace Microsoft.AspNet.Mvc
             using (var outputStream = new DelegatingStream(innerStream))
             using (var xmlWriter = CreateXmlWriter(outputStream, tempWriterSettings))
             {
-                var runtimeType = context.Object == null ? null : context.Object.GetType();
+                var responseData = context.Object;
+                var runtimeType = responseData == null ? null : responseData.GetType();
 
                 var type = GetSerializableType(context.DeclaredType, runtimeType);
+                var wrapperContext = GetWrapperType(type);
+                type = wrapperContext.WrappingType ?? wrapperContext.OriginalType;
                 var dataContractSerializer = CreateSerializer(type);
-                dataContractSerializer.WriteObject(xmlWriter, context.Object);
+
+                if (wrapperContext.WrapperProvider != null)
+                {
+                    responseData = wrapperContext.WrapperProvider.Wrap(responseData);
+                }
+
+                dataContractSerializer.WriteObject(xmlWriter, responseData);
             }
 
             return Task.FromResult(true);
