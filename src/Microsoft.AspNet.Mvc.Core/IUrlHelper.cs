@@ -33,13 +33,6 @@ namespace Microsoft.AspNet.Mvc
         string Content(string contentPath);
 
         /// <summary>
-        /// Returns a value that indicates whether the URL is local.
-        /// </summary>
-        /// <param name="url">The URL.</param>
-        /// <returns>true if the URL is local; otherwise, false.</returns>
-        bool IsLocalUrl(string url);
-
-        /// <summary>
         /// Generates a fully qualified or absolute URL for the specified route values by
         /// using the specified route name, protocol to use, host name and fragment.
         /// </summary>

@@ -54,7 +54,7 @@ namespace Microsoft.AspNet.Mvc
 
             // IsLocalUrl is called to handle  Urls starting with '~/'.
             var destinationUrl = Url;
-            if (urlHelper.IsLocalUrl(destinationUrl))
+            if (Microsoft.AspNet.Mvc.UrlHelper.IsLocalUrl(destinationUrl))
             {
                 destinationUrl = urlHelper.Content(Url);
             }

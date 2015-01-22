@@ -4,13 +4,12 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Threading;
 using Microsoft.AspNet.Http.Core.Collections;
 using Xunit;
 
-namespace Microsoft.AspNet.Mvc.Core.Test
+namespace Microsoft.AspNet.Mvc.Testing.Test
 {
-	public class UnitTestabilityTestPrototype
+	public class ControllerTestHelperTest
 	{
 		[Fact]
 		public void ControllerTestability_UsingContextRequestAbortedTest()
@@ -18,31 +17,30 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 			// Arrange
 			var controller = new TestabilityController();
 
-			var callback = new MvcControllerUnitTestHelperCallback()
+			var context = new ControllerTestHelperContext()
 			{
-				OnRquestAborted = () => new CancellationToken(true)
+				RequestAborted = true
 			};
 
 			// Act
-			new MvcControllerUnitTestHelper().Initialize(controller, callback);
+			ControllerTestHelper.Initialize(controller, context);
 			var viewResult = controller.UsingContextRequestAborted();
 
 			// Assert
-			Assert.Equal("RequestAborted", viewResult.ViewName);
+			Assert.Null(viewResult);
 
 			// Arrange
-			callback = new MvcControllerUnitTestHelperCallback()
+			context = new ControllerTestHelperContext()
 			{
-				OnRquestAborted = () => new CancellationToken(false)
+				RequestAborted = false
 			};
 
 			// Act
-			new MvcControllerUnitTestHelper().Initialize(controller, callback);
+			ControllerTestHelper.Initialize(controller, context);
 			viewResult = controller.UsingContextRequestAborted();
 
 			// Assert
 			Assert.Equal("Request", viewResult.ViewName);
-
 		}
 
 		[Fact]
@@ -57,7 +55,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 			};
 
 			// Act
-			new MvcControllerUnitTestHelper().Initialize(controller, null);
+			ControllerTestHelper.Initialize(controller, null);
 			controller.ModelState.AddModelError("", "error_1");
 			var result = controller.UsngModelState(model);
 
@@ -76,13 +74,13 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 			var formData = new Dictionary<string, string[]>() { { "formKey1", new string[] { "formKey1Value" } } };
 			var formCollection = new FormCollection(formData);
 
-			var callback = new MvcControllerUnitTestHelperCallback()
+			var context = new ControllerTestHelperContext()
 			{
-				OnRequestFormCollection = () => formCollection
+				RequestFormCollection = formCollection
 			};
 
 			// Act
-			new MvcControllerUnitTestHelper().Initialize(controller, callback);
+			ControllerTestHelper.Initialize(controller, context);
 			var result = controller.UsingContextFormCollection("formKey1");
 
 			// Assert
@@ -95,22 +93,43 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 		{
 			// Arrange
 			var controller = new TestabilityController();
-			var testHelper = new MvcControllerUnitTestHelper();
 
-
-			var callback = new MvcControllerUnitTestHelperCallback()
+			var helperContext = new ControllerTestHelperContext()
 			{
-				OnUrlAction = (action) =>
+				OnUrlAction = (action, controllerName, values)
+				=>
 				{
 					Assert.Equal("redirect", action);
 					return action;
 				}
 			};
+			ControllerTestHelper.Initialize(controller, helperContext);
 
 			// Act && Assert
-			testHelper.Initialize(controller, callback);
 			var result = controller.UsingUrlAction("redirect");
 
+			// Arrange
+			controller = new TestabilityController();
+
+			helperContext = new ControllerTestHelperContext()
+			{
+				OnUrlAction = (action, controllerName, values)
+				=>
+				{
+					Assert.Equal("controller1", controllerName);
+					Assert.Equal(null, values);
+					Assert.Equal("http", helperContext.RequestScheme);
+					Assert.Equal("host1", helperContext.RequestHost);
+					Assert.Equal("fragment1", helperContext.RequestFragment);
+					Assert.Equal("redirect", action);
+					return action;
+				}
+			};
+
+			ControllerTestHelper.Initialize(controller, helperContext);
+
+			// Act && Assert
+			result = controller.UsingUrlActionFull("redirect", "controller1", null, "http", "host1", "fragment1");
 		}
 
 		private class MyModel
@@ -141,7 +160,7 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 			{
 				if (Context.RequestAborted.IsCancellationRequested)
 				{
-					return View("RequestAborted");
+					return null;
 				}
 				return View("Request");
 			}
@@ -167,6 +186,12 @@ namespace Microsoft.AspNet.Mvc.Core.Test
 			public IActionResult UsingUrlAction(string action)
 			{
 				return View(Url.Action(action));
+			}
+
+			public IActionResult UsingUrlActionFull(string action, string controller, object values, string protocol,
+				string host, string fragment)
+			{
+				return View(Url.Action(action, controller, values, protocol, host, fragment));
 			}
 		}
 	}

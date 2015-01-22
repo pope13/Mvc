@@ -68,8 +68,13 @@ namespace Microsoft.AspNet.Mvc
             return GenerateUrl(protocol, host, path, fragment);
         }
 
-        /// <inheritdoc />
-        public bool IsLocalUrl(string url)
+        /// <summary>
+        /// Returns a value that indicates whether the URL is local.
+        /// </summary>
+        /// <param name="url">The URL.</param>
+        /// <returns>true if the URL is local; otherwise, false.</returns>
+
+        public static bool IsLocalUrl(string url)
         {
             return
                 !string.IsNullOrEmpty(url) &&

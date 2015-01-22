@@ -62,11 +62,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("")]
         public void IsLocalUrl_ReturnsFalseOnEmpty(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper();
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.False(result);
@@ -78,11 +75,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("/")]
         public void IsLocalUrl_AcceptsRootedUrls(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper();
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.True(result);
@@ -93,11 +87,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("~/foo.html")]
         public void IsLocalUrl_AcceptsApplicationRelativeUrls(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper();
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.True(result);
@@ -109,11 +100,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("fold/foo.html")]
         public void IsLocalUrl_RejectsRelativeUrls(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper();
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.False(result);
@@ -126,11 +114,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("HtTpS:/www.example.com")]
         public void IsLocalUrl_RejectValidButUnsafeRelativeUrls(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper();
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.False(result);
@@ -141,11 +126,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("http://WWW.MYSITE.COM")]
         public void IsLocalUrl_RejectsUrlsOnTheSameHost(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper("www.mysite.com");
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.False(result);
@@ -156,11 +138,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("http://127.0.0.1/foobar.html")]
         public void IsLocalUrl_RejectsUrlsOnLocalHost(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper("www.mysite.com");
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.False(result);
@@ -170,11 +149,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("https://www.mysite.com/")]
         public void IsLocalUrl_RejectsUrlsOnTheSameHostButDifferentScheme(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper("www.mysite.com");
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.False(result);
@@ -187,11 +163,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("HtTpS://www.example.com")]
         public void IsLocalUrl_RejectsUrlsOnDifferentHost(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper("www.mysite.com");
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.False(result);
@@ -205,11 +178,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("http:////www.example.com/foo.html")]
         public void IsLocalUrl_RejectsUrlsWithTooManySchemeSeparatorCharacters(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper("www.mysite.com");
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.False(result);
@@ -224,11 +194,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("//////www.example.com")]
         public void IsLocalUrl_RejectsUrlsWithMissingSchemeName(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper("www.mysite.com");
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.False(result);
@@ -241,11 +208,8 @@ namespace Microsoft.AspNet.Mvc.Core.Test
         [InlineData("/\\foo")]
         public void IsLocalUrl_RejectsInvalidUrls(string url)
         {
-            // Arrange
-            var helper = CreateUrlHelper("www.mysite.com");
-
-            // Act
-            var result = helper.IsLocalUrl(url);
+            // Arrange && Act
+            var result = UrlHelper.IsLocalUrl(url);
 
             // Assert
             Assert.False(result);
