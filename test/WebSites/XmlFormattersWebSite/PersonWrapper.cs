@@ -1,6 +1,7 @@
 ﻿using System;
+using XmlFormattersWebSite.Models;
 
-namespace XmlSerializerWebSite
+namespace XmlFormattersWebSite
 {
     public class PersonWrapper
     {

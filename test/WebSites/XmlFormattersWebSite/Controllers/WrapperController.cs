@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNet.Mvc;
+using XmlFormattersWebSite.Models;
 
-namespace XmlSerializerWebSite.Controllers
+namespace XmlFormattersWebSite.Controllers
 {
     public class WrapperController : Controller
     {

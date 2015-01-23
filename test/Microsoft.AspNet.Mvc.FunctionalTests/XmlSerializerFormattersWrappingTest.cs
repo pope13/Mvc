@@ -15,8 +15,8 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
 {
     public class XmlSerializerFormattersWrappingTest
     {
-        private readonly IServiceProvider _services = TestHelper.CreateServices(nameof(XmlSerializerWebSite));
-        private readonly Action<IApplicationBuilder> _app = new XmlSerializerWebSite.Startup().Configure;
+        private readonly IServiceProvider _services = TestHelper.CreateServices(nameof(XmlFormattersWebSite));
+        private readonly Action<IApplicationBuilder> _app = new XmlFormattersWebSite.Startup().Configure;
 
         [Fact(Skip = "todo")]
         public async Task CanWrite_NestedIEnumerableOf_NonWrappedTypes()

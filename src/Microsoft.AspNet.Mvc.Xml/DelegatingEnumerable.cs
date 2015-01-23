@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Microsoft.AspNet.Mvc
+namespace Microsoft.AspNet.Mvc.Xml
 {
     /// <summary>
     /// Helper class to serialize <see cref="IEnumerable{T}"/> types by delegating them through a concrete implementation."/>.

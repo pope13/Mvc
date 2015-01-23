@@ -1,7 +1,8 @@
 ﻿using System;
-using Microsoft.AspNet.Mvc;
+using Microsoft.AspNet.Mvc.Xml;
+using XmlFormattersWebSite.Models;
 
-namespace XmlSerializerWebSite
+namespace XmlFormattersWebSite
 {
     public class PersonWrapperProvider : IWrapperProvider
     {

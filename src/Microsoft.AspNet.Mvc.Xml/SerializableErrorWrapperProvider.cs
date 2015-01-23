@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Microsoft.AspNet.Mvc
+namespace Microsoft.AspNet.Mvc.Xml
 {
     public class SerializableErrorWrapperProvider : IWrapperProvider
     {

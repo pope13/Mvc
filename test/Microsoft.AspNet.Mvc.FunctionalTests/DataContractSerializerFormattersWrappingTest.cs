@@ -15,8 +15,8 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
 {
     public class DataContractSerializerFormattersWrappingTest
     {
-        private readonly IServiceProvider _services = TestHelper.CreateServices(nameof(XmlSerializerWebSite));
-        private readonly Action<IApplicationBuilder> _app = new XmlSerializerWebSite.Startup().Configure;
+        private readonly IServiceProvider _services = TestHelper.CreateServices(nameof(XmlFormattersWebSite));
+        private readonly Action<IApplicationBuilder> _app = new XmlFormattersWebSite.Startup().Configure;
 
         [Fact(Skip = "todo")]
         public async Task CanWrite_NestedIEnumerableOf_NonWrappedTypes()
@@ -93,7 +93,7 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var result = await response.Content.ReadAsStringAsync();
             Assert.Equal("<ArrayOfPersonWrapper xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\"" +
-                " xmlns=\"http://schemas.datacontract.org/2004/07/XmlSerializerWebSite\"><PersonWrapper>" +
+                " xmlns=\"http://schemas.datacontract.org/2004/07/XmlFormattersWebSite\"><PersonWrapper>" +
                 "<Age>35</Age><Id>10</Id><Name>Mike</Name></PersonWrapper><PersonWrapper><Age>35</Age><Id>" +
                 "11</Id><Name>Jimmy</Name></PersonWrapper></ArrayOfPersonWrapper>",
                 result);
@@ -138,7 +138,7 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var result = await response.Content.ReadAsStringAsync();
             Assert.Equal("<ArrayOfPersonWrapper xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\"" +
-                " xmlns=\"http://schemas.datacontract.org/2004/07/XmlSerializerWebSite\"><PersonWrapper>" +
+                " xmlns=\"http://schemas.datacontract.org/2004/07/XmlFormattersWebSite\"><PersonWrapper>" +
                 "<Age>35</Age><Id>10</Id><Name>Mike</Name></PersonWrapper><PersonWrapper><Age>35</Age><Id>" +
                 "11</Id><Name>Jimmy</Name></PersonWrapper></ArrayOfPersonWrapper>",
                 result);
@@ -185,7 +185,7 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var result = await response.Content.ReadAsStringAsync();
             Assert.Equal("<ArrayOfSerializableErrorWrapper xmlns:i=\"http://www.w3.org/2001/XMLSchema-instance\"" +
-                " xmlns=\"http://schemas.datacontract.org/2004/07/Microsoft.AspNet.Mvc\"><SerializableErrorWrapper>" +
+                " xmlns=\"http://schemas.datacontract.org/2004/07/Microsoft.AspNet.Mvc.Xml\"><SerializableErrorWrapper>" +
                 "<key1>key1-error</key1><key2>key2-error</key2></SerializableErrorWrapper><SerializableErrorWrapper>" +
                 "<key3>key1-error</key3><key4>key2-error</key4></SerializableErrorWrapper>" +
                 "</ArrayOfSerializableErrorWrapper>",
