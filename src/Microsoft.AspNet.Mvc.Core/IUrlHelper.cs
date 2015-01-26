@@ -36,7 +36,7 @@ namespace Microsoft.AspNet.Mvc
         /// Returns a value that indicates whether the URL is local.
         /// </summary>
         /// <param name="url">The URL.</param>
-        /// <returns>true if the URL is local; otherwise, false.</returns>
+        /// <returns><c>true</c> if the URL is local; otherwise, <c>false</c>.</returns>
         bool IsLocalUrl(string url);
 
         /// <summary>
