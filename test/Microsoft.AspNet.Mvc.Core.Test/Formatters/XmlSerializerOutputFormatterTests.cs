@@ -271,7 +271,6 @@ namespace Microsoft.AspNet.Mvc.Core
         {
             // Arrange
             var formatter = new XmlSerializerOutputFormatter();
-            formatter.WrapperProviders.Add(new EnumerableWrapperProvider(formatter.WrapperProviders));
             var outputFormatterContext = GetOutputFormatterContext(input, declaredType);
 
             // Act

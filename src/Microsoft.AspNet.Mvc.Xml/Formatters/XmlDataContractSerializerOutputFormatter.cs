@@ -17,6 +17,8 @@ namespace Microsoft.AspNet.Mvc.Xml
     /// </summary>
     public class XmlDataContractSerializerOutputFormatter : OutputFormatter
     {
+        private IWrapperProviderFactoryProvider _wrapperProviderFactoryProvider;
+
         /// <summary>
         /// Initializes a new instance of <see cref="XmlDataContractSerializerOutputFormatter"/>
         /// with default XmlWriterSettings
@@ -39,9 +41,26 @@ namespace Microsoft.AspNet.Mvc.Xml
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("text/xml"));
 
             WriterSettings = writerSettings;
+
+            WrapperProviderFactoryProvider = new DefaultWrapperProviderFactoryProvider();
         }
 
-        public IList<IWrapperProvider> WrapperProviders { get; set; } = new List<IWrapperProvider>();
+        public IWrapperProviderFactoryProvider WrapperProviderFactoryProvider
+        {
+            get
+            {
+                return _wrapperProviderFactoryProvider;
+            }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(nameof(value));
+                }
+
+                _wrapperProviderFactoryProvider = value;
+            }
+        }
 
         /// <summary>
         /// Gets the settings to be used by the XmlWriter.
@@ -69,12 +88,20 @@ namespace Microsoft.AspNet.Mvc.Xml
         /// <returns>The original or wrapped type provided by any <see cref="IWrapperProvider"/>s.</returns>
         protected virtual Type GetSerializableType(Type type)
         {
-            var wrapperInfo = FormattingUtilities.GetWrapperInformation(
-                WrapperProviders,
-                originalType: type,
-                serialization: true);
+            IWrapperProvider wrapperProvider = null;
+            foreach (var wrapperProviderFactory in WrapperProviderFactoryProvider.WrapperProviderFactories)
+            {
+                wrapperProvider = wrapperProviderFactory.GetProvider(new WrapperProviderContext(
+                                                                            type,
+                                                                            isSerialization:  true));
+                if (wrapperProvider != null)
+                {
+                    type = wrapperProvider.GetWrappingType(type);
+                    break;
+                }
+            }
 
-            return wrapperInfo.WrappingType ?? wrapperInfo.OriginalType;
+            return type;
         }
 
         /// <inheritdoc />
@@ -138,15 +165,19 @@ namespace Microsoft.AspNet.Mvc.Xml
 
                 var originalOrWrappedType = GetSerializableType(resolvedType);
 
-                var wrapperInfo = FormattingUtilities.GetWrapperInformation(
-                                                                    WrapperProviders,
-                                                                    resolvedType,
-                                                                    serialization: true);
-                if (wrapperInfo.WrapperProvider != null)
+                IWrapperProvider wrapperProvider = null;
+                foreach (var wrapperProviderFactory in WrapperProviderFactoryProvider.WrapperProviderFactories)
                 {
-                    obj = wrapperInfo.WrapperProvider.Wrap(wrapperInfo.OriginalType, obj);
+                    wrapperProvider = wrapperProviderFactory.GetProvider(new WrapperProviderContext(
+                                                                                    resolvedType,
+                                                                                    isSerialization: true));
+                    if (wrapperProvider != null)
+                    {
+                        obj = wrapperProvider.Wrap(obj);
+                        break;
+                    }
                 }
-
+                
                 var dataContractSerializer = CreateSerializer(originalOrWrappedType);
                 dataContractSerializer.WriteObject(xmlWriter, obj);
             }

@@ -18,13 +18,15 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
         private readonly IServiceProvider _services = TestHelper.CreateServices(nameof(XmlFormattersWebSite));
         private readonly Action<IApplicationBuilder> _app = new XmlFormattersWebSite.Startup().Configure;
 
-        [Fact(Skip = "todo")]
-        public async Task CanWrite_NestedIEnumerableOf_NonWrappedTypes()
+        [Theory]
+        [InlineData("http://localhost/Wrapper/IEnumerableOfValueTypes")]
+        [InlineData("http://localhost/Wrapper/IQueryableOfValueTypes")]
+        public async Task CanWrite_ValueTypes(string url)
         {
             // Arrange
             var server = TestServer.Create(_services, _app);
             var client = server.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/Wrapper/NestedIEnumerableOfNonWrappedTypes");
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/xml-xmlser"));
 
             // Act
@@ -33,36 +35,21 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
             //Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var result = await response.Content.ReadAsStringAsync();
-            Assert.Equal("todo", result);
+            Assert.Equal("<ArrayOfInt xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
+                         "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><int>10</int>" +
+                         "<int>20</int></ArrayOfInt>",
+                         result);
         }
 
-        [Fact(Skip = "todo")]
-        public async Task CanWrite_NestedIEnumerableOf_WrappedTypes()
+        [Theory]
+        [InlineData("http://localhost/Wrapper/IEnumerableOfNonWrappedTypes")]
+        [InlineData("http://localhost/Wrapper/IQueryableOfNonWrappedTypes")]
+        public async Task CanWrite_NonWrappedTypes(string url)
         {
             // Arrange
             var server = TestServer.Create(_services, _app);
             var client = server.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/Wrapper/NestedIEnumerableOfWrappedTypes");
-            request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/xml-xmlser"));
-
-            // Act
-            var response = await client.SendAsync(request);
-
-            //Assert
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            var result = await response.Content.ReadAsStringAsync();
-            Assert.Equal("todo", result);
-        }
-
-        // ------------------------------------
-
-        [Fact]
-        public async Task CanWrite_IEnumerableOf_NonWrappedTypes()
-        {
-            // Arrange
-            var server = TestServer.Create(_services, _app);
-            var client = server.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/Wrapper/IEnumerableOfNonWrappedTypes");
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/xml-xmlser"));
 
             // Act
@@ -77,13 +64,37 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
                          result);
         }
 
-        [Fact]
-        public async Task CanWrite_IEnumerableOf_WrappedTypes()
+        [Theory]
+        [InlineData("http://localhost/Wrapper/IEnumerableOfNonWrappedTypes_NullInstance")]
+        [InlineData("http://localhost/Wrapper/IQueryableOfNonWrappedTypes_NullInstance")]
+        public async Task CanWrite_NonWrappedTypes_NullInstance(string url)
         {
             // Arrange
             var server = TestServer.Create(_services, _app);
             var client = server.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/Wrapper/IEnumerableOfWrappedTypes");
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/xml-xmlser"));
+
+            // Act
+            var response = await client.SendAsync(request);
+
+            //Assert
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var result = await response.Content.ReadAsStringAsync();
+            Assert.Equal("<ArrayOfString xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
+                " xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xsi:nil=\"true\" />",
+                result);
+        }
+
+        [Theory]
+        [InlineData("http://localhost/Wrapper/IEnumerableOfWrappedTypes")]
+        [InlineData("http://localhost/Wrapper/IQueryableOfWrappedTypes")]
+        public async Task CanWrite_WrappedTypes(string url)
+        {
+            // Arrange
+            var server = TestServer.Create(_services, _app);
+            var client = server.CreateClient();
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/xml-xmlser"));
 
             // Act
@@ -99,15 +110,15 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
                          result);
         }
 
-        //------------------------------------
-
-        [Fact]
-        public async Task CanWrite_IQueryableOf_NonWrappedTypes()
+        [Theory]
+        [InlineData("http://localhost/Wrapper/IEnumerableOfWrappedTypes_NullInstance")]
+        [InlineData("http://localhost/Wrapper/IQueryableOfWrappedTypes_NullInstance")]
+        public async Task CanWrite_WrappedTypes_NullInstance(string url)
         {
             // Arrange
             var server = TestServer.Create(_services, _app);
             var client = server.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/Wrapper/IQueryableOfNonWrappedTypes");
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/xml-xmlser"));
 
             // Act
@@ -116,34 +127,10 @@ namespace Microsoft.AspNet.Mvc.FunctionalTests
             //Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var result = await response.Content.ReadAsStringAsync();
-            Assert.Equal("<ArrayOfString xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                         "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><string>value1</string>" +
-                         "<string>value2</string></ArrayOfString>",
-                         result);
+            Assert.Equal("<ArrayOfPersonWrapper xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
+                " xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xsi:nil=\"true\" />",
+                result);
         }
-
-        [Fact]
-        public async Task CanWrite_IQueryableOf_WrappedTypes()
-        {
-            // Arrange
-            var server = TestServer.Create(_services, _app);
-            var client = server.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, "http://localhost/Wrapper/IQueryableOfNonWrappedTypes");
-            request.Headers.Accept.Add(MediaTypeWithQualityHeaderValue.Parse("application/xml-xmlser"));
-
-            // Act
-            var response = await client.SendAsync(request);
-
-            //Assert
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-            var result = await response.Content.ReadAsStringAsync();
-            Assert.Equal("<ArrayOfString xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
-                         "xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"><string>value1</string>" +
-                         "<string>value2</string></ArrayOfString>",
-                         result);
-        }
-
-        //-------------------------------------
 
         [Fact]
         public async Task PostedSerializableError_IsBound()

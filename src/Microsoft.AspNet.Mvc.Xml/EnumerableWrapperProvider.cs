@@ -1,135 +1,82 @@
-﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-
-using System;
-using System.Collections.Concurrent;
+﻿using System;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Microsoft.AspNet.Mvc.Xml
 {
     public class EnumerableWrapperProvider : IWrapperProvider
     {
-        private static readonly ConcurrentDictionary<Type, Type> _delegatingEnumerableCache = new ConcurrentDictionary<Type, Type>();
-        private static ConcurrentDictionary<Type, ConstructorInfo> _delegatingEnumerableConstructorCache = new ConcurrentDictionary<Type, ConstructorInfo>();
-        private readonly IEnumerable<IWrapperProvider> _wrapperProviders;
+        private readonly WrapperProviderContext _context;
+        private readonly Type _sourceIEnumerableGenericType;
+        private readonly IEnumerable<IWrapperProviderFactory> _wrapperProviderFactories;
 
-        public EnumerableWrapperProvider(IEnumerable<IWrapperProvider> wrapperProviders)
+        public EnumerableWrapperProvider(
+            Type sourceIEnumerableGenericType,
+            IEnumerable<IWrapperProviderFactory> wrapperProviderFactories,
+            WrapperProviderContext context)
         {
-            _wrapperProviders = wrapperProviders;
+            _sourceIEnumerableGenericType = sourceIEnumerableGenericType;
+            _wrapperProviderFactories = wrapperProviderFactories;
+            _context = context;
         }
 
-        public bool TryGetWrappingTypeForDeserialization(Type originalType, out Type wrappingType)
+        public Type GetWrappingType([NotNull] Type declaredType)
         {
-            wrappingType = null;
-
-            return false;
+            IWrapperProvider elementWrapperProvider = null;
+            return GetWrappingEnumerableType(out elementWrapperProvider);
         }
 
-        // Examples: 
-        // a. IEnumerable<SerializableError> => DelegatingEnumerable<SerializableErrorWrapper>
-        // b. IEnumerable<Person> => DelegatingEnumerable<Person>
-        public bool TryGetWrappingTypeForSerialization(Type originalType, out Type wrappingType)
+        public object Wrap(object original)
         {
-            return TryGetDelegatingType(originalType, out wrappingType);
-        }
-
-        /// <inheritdoc />
-        public object Unwrap(Type declaredType, object obj)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <inheritdoc />
-        public object Wrap(Type declaredType, object original)
-        {
-            Type delegatingType;
-            if (TryGetDelegatingType(declaredType, out delegatingType))
+            if (original != null)
             {
-                // get the wrapper provider for the T itself
-                var elementType = declaredType.GetGenericArguments()[0];
+                IWrapperProvider elementWrapperProvider = null;
+                var wrappingEnumerableType = GetWrappingEnumerableType(out elementWrapperProvider);
 
-                var wrapperInfo = GetWrapperInfo(elementType);
-                elementType = wrapperInfo.WrappingType ?? wrapperInfo.OriginalType;
-
-                return GetTypeRemappingConstructor(delegatingType).Invoke(new object[] 
+                var wrappingEnumerableTypeConstructor = wrappingEnumerableType.GetConstructor(new[]
                     {
-                        elementType,
-                        original,
-                        wrapperInfo.WrapperProvider
-                    });
-            }
-
-            return original;
-        }
-
-        private bool TryGetDelegatingType(Type originalType, out Type wrappingType)
-        {
-            wrappingType = null;
-            if (originalType != null && originalType.IsInterface() && originalType.IsGenericType())
-            {
-                // check if we can get a enumerable generic type. Example: IEnumerable<SerializableError>
-                var genericType = originalType.ExtractGenericInterface(typeof(IEnumerable<>));
-                if (genericType != null)
-                {
-                    wrappingType = GetOrAddDelegatingType(originalType, genericType);
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private Type GetOrAddDelegatingType(Type originalType, Type genericType)
-        {
-            return _delegatingEnumerableCache.GetOrAdd(
-                originalType,
-                (typeToRemap) =>
-                {
-                    // This retrieves the T type of the IEnumerable<T> interface.
-                    var elementType = genericType.GetGenericArguments()[0];
-
-                    var wrapperInfo = GetWrapperInfo(elementType);
-                    elementType = wrapperInfo.WrappingType ?? wrapperInfo.OriginalType;
-                    
-                    var delegatingType = typeof(DelegatingEnumerable<>).MakeGenericType(elementType);
-                    var delegatingConstructor = delegatingType.GetConstructor(new []
-                    {
-                        typeof(Type),
-                        typeof(IEnumerable<object>),
+                        _sourceIEnumerableGenericType,
                         typeof(IWrapperProvider)
                     });
 
-                    _delegatingEnumerableConstructorCache.TryAdd(delegatingType, delegatingConstructor);
-
-                    return delegatingType;
-                });
-        }
-
-        private ConstructorInfo GetTypeRemappingConstructor(Type type)
-        {
-            ConstructorInfo constructorInfo;
-            _delegatingEnumerableConstructorCache.TryGetValue(type, out constructorInfo);
-            return constructorInfo;
-        }
-
-        private WrapperInfo GetWrapperInfo(Type originalType)
-        {
-            Type wrappingType;
-            foreach (var wrapperProvider in _wrapperProviders)
-            {
-                if (wrapperProvider.TryGetWrappingTypeForSerialization(originalType, out wrappingType))
-                {
-                    return new WrapperInfo()
+                return wrappingEnumerableTypeConstructor.Invoke(new object[]
                     {
-                        OriginalType = originalType,
-                        WrapperProvider = wrapperProvider,
-                        WrappingType = wrappingType
-                    };
+                        original,
+                        elementWrapperProvider
+                    });
+            }
+
+            return null;
+        }
+
+        private Type GetWrappingEnumerableType(out IWrapperProvider elementWrapperProvider)
+        {
+            var declaredElementType = _sourceIEnumerableGenericType.GetGenericArguments()[0];
+
+            // Since the T itself could be wrapped, get the wrapping type for it
+            var wrapperProviderContext = new WrapperProviderContext(declaredElementType, _context.IsSerialization);
+
+            var wrappedOrDeclaredElementType = declaredElementType;
+
+            elementWrapperProvider = null;
+            foreach (var wrapperProviderFactory in _wrapperProviderFactories)
+            {
+                elementWrapperProvider = wrapperProviderFactory.GetProvider(wrapperProviderContext);
+                if (elementWrapperProvider != null)
+                {
+                    break;
                 }
             }
 
-            return new WrapperInfo() { OriginalType = originalType };
+            if (elementWrapperProvider != null)
+            {
+                var wrappingType = elementWrapperProvider.GetWrappingType(wrapperProviderContext.DeclaredType);
+                if (wrappingType != null)
+                {
+                    wrappedOrDeclaredElementType = wrappingType;
+                }
+            }
+
+            return typeof(DelegatingEnumerable<,>).MakeGenericType(wrappedOrDeclaredElementType, declaredElementType);
         }
     }
 }

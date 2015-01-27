@@ -6,29 +6,7 @@ namespace XmlFormattersWebSite
 {
     public class PersonWrapperProvider : IWrapperProvider
     {
-        public bool TryGetWrappingTypeForDeserialization(Type originalType, out Type wrappingType)
-        {
-            return TryGetWrappingType(originalType, out wrappingType);
-        }
-
-        public bool TryGetWrappingTypeForSerialization(Type originalType, out Type wrappingType)
-        {
-            return TryGetWrappingType(originalType, out wrappingType);
-        }
-
-        public object Unwrap(Type declaredType, object obj)
-        {
-            var personWrapper = obj as PersonWrapper;
-
-            if (personWrapper == null)
-            {
-                return obj;
-            }
-
-            return new Person() { Id = personWrapper.Id, Name = personWrapper.Name };
-        }
-
-        public object Wrap(Type declaredType, object obj)
+        public object Wrap(object obj)
         {
             var person = obj as Person;
 
@@ -40,16 +18,14 @@ namespace XmlFormattersWebSite
             return new PersonWrapper(person);
         }
 
-        private static bool TryGetWrappingType(Type originalType, out Type wrappingType)
+        public Type GetWrappingType(Type declaredType)
         {
-            wrappingType = null;
-            if (originalType == typeof(Person))
+            if (declaredType == typeof(Person))
             {
-                wrappingType = typeof(PersonWrapper);
-                return true;
+                return typeof(PersonWrapper);
             }
 
-            return false;
+            return null;
         }
     }
 }

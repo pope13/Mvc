@@ -51,43 +51,5 @@ namespace Microsoft.AspNet.Mvc.Xml
                 CheckCharacters = false
             };
         }
-
-        public static WrapperInfo GetWrapperInformation(
-            IEnumerable<IWrapperProvider> wrapperProviders,
-            Type originalType,
-            bool serialization)
-        {
-            IWrapperProvider wrappingProvider = null;
-            Type wrappingType = null;
-            if (serialization)
-            {
-                foreach (var wrapperProvider in wrapperProviders)
-                {
-                    if (wrapperProvider.TryGetWrappingTypeForSerialization(originalType, out wrappingType))
-                    {
-                        wrappingProvider = wrapperProvider;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                foreach (var wrapperProvider in wrapperProviders)
-                {
-                    if (wrapperProvider.TryGetWrappingTypeForDeserialization(originalType, out wrappingType))
-                    {
-                        wrappingProvider = wrapperProvider;
-                        break;
-                    }
-                }
-            }
-
-            return new WrapperInfo()
-            {
-                OriginalType = originalType,
-                WrappingType = wrappingType,
-                WrapperProvider = wrappingProvider
-            };
-        }
     }
 }

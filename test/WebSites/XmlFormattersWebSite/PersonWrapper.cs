@@ -1,9 +1,10 @@
 ﻿using System;
 using XmlFormattersWebSite.Models;
+using Microsoft.AspNet.Mvc.Xml;
 
 namespace XmlFormattersWebSite
 {
-    public class PersonWrapper
+    public class PersonWrapper : IUnwrappable
     {
         public PersonWrapper() { }
 
@@ -23,6 +24,11 @@ namespace XmlFormattersWebSite
         public override string ToString()
         {
             return string.Format("{0}, {1}, {2}", Id, Name, Age);
+        }
+
+        public object Unwrap(Type declaredType)
+        {
+            return new Person() { Id = this.Id, Name = this.Name };
         }
     }
 }

@@ -7,30 +7,29 @@ using System.Collections.Generic;
 
 namespace Microsoft.AspNet.Mvc.Xml
 {
-    public class DelegatingEnumerator<T> : IEnumerator<T>
+    public class DelegatingEnumerator<TWrappedOrDeclared, TDeclared> : IEnumerator<TWrappedOrDeclared>
     {
-        private readonly IEnumerator<object> _inner;
-        private readonly Type _originalType;
+        private readonly IEnumerator<TDeclared> _inner;
         private readonly IWrapperProvider _wrapperProvider;
 
-        public DelegatingEnumerator(Type originalType, IEnumerator<object> inner, IWrapperProvider wrapperProvider)
+        public DelegatingEnumerator([NotNull] IEnumerator<TDeclared> inner, IWrapperProvider wrapperProvider)
         {
             _inner = inner;
             _wrapperProvider = wrapperProvider;
-            _originalType = originalType;
         }
 
-        public T Current
+        public TWrappedOrDeclared Current
         {
             get
             {
-                var obj = _inner.Current;
+                object obj = _inner.Current;
                 if (_wrapperProvider == null)
                 {
-                    return (T)obj;
+                    // if there is no wrapper, then this cast should not fail
+                    return (TWrappedOrDeclared)obj;
                 }
 
-                return (T)_wrapperProvider.Wrap(_originalType, obj);
+                return (TWrappedOrDeclared)_wrapperProvider.Wrap(obj);
             }
         }
 
@@ -44,7 +43,7 @@ namespace Microsoft.AspNet.Mvc.Xml
                     return obj;
                 }
 
-               return _wrapperProvider.Wrap(_originalType, obj); 
+               return _wrapperProvider.Wrap(obj); 
             }
         }
 

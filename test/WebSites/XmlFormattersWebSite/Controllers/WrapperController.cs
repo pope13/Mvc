@@ -8,6 +8,11 @@ namespace XmlFormattersWebSite.Controllers
 {
     public class WrapperController : Controller
     {
+        public IEnumerable<int> IEnumerableOfValueTypes()
+        {
+            return new[] { 10, 20 };
+        }
+
         public IEnumerable<string> IEnumerableOfNonWrappedTypes()
         {
             return new[] { "value1", "value2" };
@@ -21,7 +26,19 @@ namespace XmlFormattersWebSite.Controllers
             };
         }
 
-        // ---------------------
+        //---------------------
+
+        public IEnumerable<string> IEnumerableOfNonWrappedTypes_NullInstance()
+        {
+            return null;
+        }
+
+        public IEnumerable<Person> IEnumerableOfWrappedTypes_NullInstance()
+        {
+            return null;
+        }
+
+        //---------------------
 
         public IEnumerable<IEnumerable<string>> NestedIEnumerableOfNonWrappedTypes()
         {
@@ -49,6 +66,11 @@ namespace XmlFormattersWebSite.Controllers
 
         // --------------------
 
+        public IQueryable<int> IQueryableOfValueTypes()
+        {
+            return Enumerable.Range(1, 2).Select(i => i * 10).AsQueryable();
+        }
+
         public IQueryable<string> IQueryableOfNonWrappedTypes()
         {
             return Enumerable.Range(1, 2).Select(i => "value" + i).AsQueryable();
@@ -60,6 +82,18 @@ namespace XmlFormattersWebSite.Controllers
                 new Person() { Id = 10, Name = "Mike" },
                 new Person() { Id = 11, Name = "Jimmy" }
             }.AsQueryable();
+        }
+
+        //---------------------
+
+        public IQueryable<string> IQueryableOfNonWrappedTypes_NullInstance()
+        {
+            return null;
+        }
+
+        public IQueryable<Person> IQueryableOfWrappedTypes_NullInstance()
+        {
+            return null;
         }
 
         // --------------------

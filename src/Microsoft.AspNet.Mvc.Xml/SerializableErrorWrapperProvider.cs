@@ -1,31 +1,28 @@
 ﻿using System;
+using Microsoft.AspNet.Mvc;
 
 namespace Microsoft.AspNet.Mvc.Xml
 {
     public class SerializableErrorWrapperProvider : IWrapperProvider
     {
-        public bool TryGetWrappingTypeForDeserialization(Type originalType, out Type wrappingType)
+        private readonly WrapperProviderContext _context;
+
+        public SerializableErrorWrapperProvider([NotNull] WrapperProviderContext context)
         {
-            return TryGetWrappingType(originalType, out wrappingType);   
+            _context = context;
         }
 
-        public bool TryGetWrappingTypeForSerialization(Type originalType, out Type wrappingType)
+        public Type GetWrappingType([NotNull] Type declaredType)
         {
-            return TryGetWrappingType(originalType, out wrappingType);
-        }
-
-        public object Unwrap(Type declaredType, object wrapped)
-        {
-            var errorWrapper = wrapped as SerializableErrorWrapper;
-            if (errorWrapper == null)
+            if (declaredType == typeof(SerializableError))
             {
-                return wrapped;
+                return typeof(SerializableErrorWrapper);
             }
 
-            return errorWrapper.SerializableError;
+            return null;
         }
 
-        public object Wrap(Type declaredType, object original)
+        public object Wrap(object original)
         {
             var error = original as SerializableError;
             if (error == null)
@@ -34,18 +31,6 @@ namespace Microsoft.AspNet.Mvc.Xml
             }
 
             return new SerializableErrorWrapper(error);
-        }
-
-        private static bool TryGetWrappingType(Type originalType, out Type wrappingType)
-        {
-            wrappingType = null;
-            if (originalType == typeof(SerializableError))
-            {
-                wrappingType = typeof(SerializableErrorWrapper);
-                return true;
-            }
-
-            return false;
         }
     }
 }

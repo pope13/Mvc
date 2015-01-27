@@ -21,6 +21,7 @@ namespace Microsoft.AspNet.Mvc.Xml
     public class XmlSerializerInputFormatter : IInputFormatter
     {
         private readonly XmlDictionaryReaderQuotas _readerQuotas = FormattingUtilities.GetDefaultXmlReaderQuotas();
+        private IWrapperProviderFactoryProvider _wrapperProviderFactoryProvider;
 
         /// <summary>
         /// Initializes a new instance of XmlSerializerInputFormatter.
@@ -30,12 +31,30 @@ namespace Microsoft.AspNet.Mvc.Xml
             SupportedEncodings = new List<Encoding>();
             SupportedEncodings.Add(Encodings.UTF8EncodingWithoutBOM);
             SupportedEncodings.Add(Encodings.UTF16EncodingLittleEndian);
+
             SupportedMediaTypes = new List<MediaTypeHeaderValue>();
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("application/xml"));
             SupportedMediaTypes.Add(MediaTypeHeaderValue.Parse("text/xml"));
+
+            WrapperProviderFactoryProvider = new DefaultWrapperProviderFactoryProvider();
         }
 
-        public IList<IWrapperProvider> WrapperProviders { get; set; } = new List<IWrapperProvider>();
+        public IWrapperProviderFactoryProvider WrapperProviderFactoryProvider
+        {
+            get
+            {
+                return _wrapperProviderFactoryProvider;
+            }
+            set
+            {
+                if (value == null)
+                {
+                    throw new ArgumentNullException(nameof(value));
+                }
+
+                _wrapperProviderFactoryProvider = value;
+            }
+        }
 
         /// <inheritdoc />
         public IList<MediaTypeHeaderValue> SupportedMediaTypes { get; private set; }
@@ -123,25 +142,35 @@ namespace Microsoft.AspNet.Mvc.Xml
 
         private Task<object> ReadInternal(InputFormatterContext context)
         {
-            var type = context.ModelType;
             var request = context.ActionContext.HttpContext.Request;
 
             using (var xmlReader = CreateXmlReader(new DelegatingStream(request.Body)))
             {
-                var wrapperInfo = FormattingUtilities.GetWrapperInformation(
-                    WrapperProviders,
-                    originalType: type,
-                    serialization: false);
+                var type = context.ModelType;
 
-                type = wrapperInfo.WrappingType ?? wrapperInfo.OriginalType;
+                var wrapperFactoryProviderContext = new WrapperProviderContext(
+                                                            type,
+                                                            isSerialization: false);
 
+                IWrapperProvider wrapperProvider = null;
+                foreach (var wrapperProviderFactory in WrapperProviderFactoryProvider.WrapperProviderFactories)
+                {
+                    wrapperProvider = wrapperProviderFactory.GetProvider(wrapperFactoryProviderContext);
+                    if (wrapperProvider != null)
+                    {
+                        type = wrapperProvider.GetWrappingType(wrapperFactoryProviderContext.DeclaredType);
+                        break;
+                    }
+                }
+                
                 var serializer = CreateXmlSerializer(type);
 
                 var deserializedObject = serializer.Deserialize(xmlReader);
 
-                if (wrapperInfo.WrapperProvider != null)
+                IUnwrappable unwrappable = deserializedObject as IUnwrappable;
+                if (unwrappable != null)
                 {
-                    deserializedObject = wrapperInfo.WrapperProvider.Unwrap(type, deserializedObject);
+                    deserializedObject = unwrappable.Unwrap(declaredType: context.ModelType);
                 }
 
                 return Task.FromResult(deserializedObject);
