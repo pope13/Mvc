@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using Microsoft.AspNet.Http;
-using Microsoft.AspNet.Mvc.Core.Internal;
+using Microsoft.AspNet.Mvc.Internal;
 using Microsoft.AspNet.Routing;
 using Microsoft.Framework.DependencyInjection;
 

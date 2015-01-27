@@ -1,12 +1,13 @@
 ﻿// Copyright (c) Microsoft Open Technologies, Inc. All rights reserved.
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
-namespace Microsoft.AspNet.Mvc.Core.Internal
+namespace Microsoft.AspNet.Mvc.Internal
 {
     public static class UrlUtility
     {
         /// <summary>
-        /// Returns a value that indicates whether the URL is local.
+        /// Returns a value that indicates whether the URL is local. An absoulte URL is considered local
+        /// if it does not have a host/authority part. Urls using the virtual paths, '~/' are also local.
         /// </summary>
         /// <param name="url">The URL.</param>
         /// <returns><c>true</c> if the URL is local; otherwise, <c>false</c>.</returns>
